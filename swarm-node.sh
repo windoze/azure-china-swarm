@@ -1,5 +1,6 @@
 #!/bin/sh
 export HOSTIP=`hostname --ip-address`
+HOSTIP=${HOSTIP%$'\n'}
 
 # Uses my proxy
 mkdir -p /etc/systemd/system/docker.service.d
