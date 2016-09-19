@@ -412,6 +412,7 @@
         "count": "[parameters('nodeCount')]"
       },
       "dependsOn": [
+        "vmLoopMaster",
         "[concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('vmNameNode'), copyIndex(), '-nic')]"
       ],

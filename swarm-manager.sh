@@ -16,7 +16,7 @@ systemctl restart docker
 
 
 # Start etcd
-docker run -d -v /etc/ssl/certs:/etc/ssl/certs -p 4001:4001 -p 2380:2380 -p 2379:2379 \
+docker run --rm -d -v /etc/ssl/certs:/etc/ssl/certs -p 4001:4001 -p 2380:2380 -p 2379:2379 \
  --name etcd ystyle/etcd \
  -name etcd0 \
  -advertise-client-urls http://${HOSTIP}:2379,http://${HOSTIP}:4001 \
@@ -27,5 +27,7 @@ docker run -d -v /etc/ssl/certs:/etc/ssl/certs -p 4001:4001 -p 2380:2380 -p 2379
  -initial-cluster etcd0=http://${HOSTIP}:2380 \
  -initial-cluster-state new
 
+sleep 10
+
 # Start swarm manager
-docker run -d -p 3376:3376 -t swarm manage -H 0.0.0.0:3376 etcd://10.0.0.4:2379/swarm
+docker run --rm -d -p 3376:3376 -t swarm manage -H 0.0.0.0:3376 etcd://10.0.0.4:2379/swarm
