@@ -1,7 +1,8 @@
 #!/bin/sh
 
-export HOSTIP=`hostname --ip-address`
+HOSTIP=`hostname --ip-address`
 HOSTIP=${HOSTIP%$'\n'}
+HOSTIP=${HOSTIP//[[:blank:]]/}
 
 
 # Uses my proxy
