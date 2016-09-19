@@ -25,9 +25,9 @@
     "vmSizeNode": "Standard_A2",
     "availabilitySetMasters": "swarm-masters-set",
     "availabilitySetNodes": "swarm-nodes-set",
-    "osImagePublisher": "CoreOS",
-    "osImageOffer": "CoreOS",
-    "osImageSKU": "Beta",
+    "osImagePublisher": "OpenLogic",
+    "osImageOffer": "CentOS",
+    "osImageSKU": "7.2",
     "managementPublicIPAddrName": "swarm-lb-masters-ip",
     "nodesPublicIPAddrName": "swarm-lb-nodes-ip",
     "virtualNetworkName": "swarm-vnet",
@@ -400,29 +400,28 @@
             }
           ]
         }
-      }
-    },
-    {
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('vmNameMaster'), copyIndex(), '/config-swarm-master')]",
-      "apiVersion": "2015-05-01-preview",
-      "location": "[resourceGroup().location]",
-      "copy": {
-        "name": "vmLoopMasterScript",
-        "count": "[variables('masterCount')]"
       },
-      "dependsOn": [
-        "vmLoopMaster"
-      ],
-      "properties": {
-        "publisher": "Microsoft.OSTCExtensions",
-        "type": "CustomScriptForLinux",
-        "typeHandlerVersion": "1.2",
-        "settings": {
-          "fileUris": ["https://raw.githubusercontent.com/windoze/azure-china-swarm/master/swarm-manager.sh"],
-          "commandToExecute": "sh swarm-manager.sh"
+      "resources": [
+        {
+          "apiVersion": "2015-06-15",
+          "type": "Microsoft.Compute/virtualMachines/extensions",
+          "name": "[concat(variables('vmNameMaster'), copyIndex(), '/config-swarm-master')]",
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/', variables('vmNameMaster'), copyIndex())]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.OSTCExtensions",
+            "type": "CustomScriptForLinux",
+            "typeHandlerVersion": "1.4",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "fileUris": ["https://raw.githubusercontent.com/windoze/azure-china-swarm/master/swarm-manager.sh"],
+              "commandToExecute": "sh swarm-manager.sh"
+            }
+          }
         }
-      }
+      ]
     },
     {
       "apiVersion": "2015-06-15",
@@ -483,29 +482,28 @@
             }
           ]
         }
-      }
-    },
-    {
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('vmNameNode'), copyIndex(), '/config-swarm-node')]",
-      "apiVersion": "2015-05-01-preview",
-      "location": "[resourceGroup().location]",
-      "copy": {
-        "name": "vmLoopNodeScript",
-        "count": "[parameters('nodeCount')]"
       },
-      "dependsOn": [
-        "vmLoopNode"
-      ],
-      "properties": {
-        "publisher": "Microsoft.OSTCExtensions",
-        "type": "CustomScriptForLinux",
-        "typeHandlerVersion": "1.2",
-        "settings": {
-          "fileUris": ["https://raw.githubusercontent.com/windoze/azure-china-swarm/master/swarm-node.sh"],
-          "commandToExecute": "sh swarm-node.sh"
+      "resources": [
+        {
+          "apiVersion": "2015-06-15",
+          "type": "Microsoft.Compute/virtualMachines/extensions",
+          "name": "[concat(variables('vmNameNode'), copyIndex(), '/config-swarm-node')]",
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/', variables('vmNameNode'), copyIndex())]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.OSTCExtensions",
+            "type": "CustomScriptForLinux",
+            "typeHandlerVersion": "1.4",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "fileUris": ["https://raw.githubusercontent.com/windoze/azure-china-swarm/master/swarm-node.sh"],
+              "commandToExecute": "sh swarm-node.sh"
+            }
+          }
         }
-      }
+      ]
     }
   ],
   "outputs": {

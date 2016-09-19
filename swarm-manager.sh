@@ -1,9 +1,9 @@
 #!/bin/sh
 
-HOSTIP=`hostname --ip-address`
-HOSTIP=${HOSTIP%$'\n'}
-HOSTIP=${HOSTIP//[[:blank:]]/}
-
+# Install docker engine
+yum -y update
+curl -sSL https://get.docker.com/ | sh
+yum install -y docker-selinux
 
 # Uses my proxy
 mkdir -p /etc/systemd/system/docker.service.d
@@ -14,9 +14,13 @@ EOF
 systemctl daemon-reload
 systemctl restart docker
 
+# Get Host IP
+HOSTIP=`hostname --ip-address`
+HOSTIP=${HOSTIP%$'\n'}
+HOSTIP=${HOSTIP//[[:blank:]]/}
 
 # Start etcd
-docker run --rm -d -v /etc/ssl/certs:/etc/ssl/certs -p 4001:4001 -p 2380:2380 -p 2379:2379 \
+docker run -d -v /etc/ssl/certs:/etc/ssl/certs -p 4001:4001 -p 2380:2380 -p 2379:2379 \
  --name etcd ystyle/etcd \
  -name etcd0 \
  -advertise-client-urls http://${HOSTIP}:2379,http://${HOSTIP}:4001 \
@@ -30,4 +34,4 @@ docker run --rm -d -v /etc/ssl/certs:/etc/ssl/certs -p 4001:4001 -p 2380:2380 -p
 sleep 10
 
 # Start swarm manager
-docker run --rm -d -p 3376:3376 -t swarm manage -H 0.0.0.0:3376 etcd://10.0.0.4:2379/swarm
+docker run --rm -d -p 3376:3376 -t swarm manage -H 0.0.0.0:3376 etcd://${HOSTIP}:2379/swarm
