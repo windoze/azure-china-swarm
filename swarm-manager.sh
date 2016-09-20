@@ -39,4 +39,4 @@ docker run -d -v /etc/ssl/certs:/etc/ssl/certs -p 4001:4001 -p 2380:2380 -p 2379
 sleep 10
 
 # Start swarm manager
-docker run --rm -d -p 3376:3376 -t swarm manage -H 0.0.0.0:3376 etcd://${HOSTIP}:2379/swarm
+docker run -d -p 3376:3376 -t swarm manage -H 0.0.0.0:3376 etcd://${HOSTIP}:2379/swarm
