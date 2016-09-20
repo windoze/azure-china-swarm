@@ -1,6 +1,6 @@
 #!/bin/sh
 
-PROXY=cxp.eastasia.cloudapp.azure.com:80
+PROXY="cxp.eastasia.cloudapp.azure.com:80"
 
 # Set yum proxy
 echo "proxy=http://${PROXY}" >> /etc/yum.conf
@@ -16,6 +16,14 @@ cat << EOF > /etc/systemd/system/docker.service.d/http-proxy.conf
 [Service]
 Environment="HTTP_PROXY=http://${PROXY}/"
 EOF
+
+# Let docker daemon listen on TCP port
+cat << EOF > /etc/systemd/system/docker.service.d/docker.conf
+[Service]
+ExecStart=
+ExecStart=/usr/bin/dockerd -H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock
+EOF
+
 systemctl daemon-reload
 systemctl restart docker
 
