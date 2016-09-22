@@ -27,8 +27,16 @@ EOF
 systemctl daemon-reload
 systemctl restart docker
 
-# Get worker token
-TOKEN="`curl -s 10.0.0.4:8080/worker`"
+# Get Host IP
+HOSTIP=`hostname --ip-address`
+HOSTIP=${HOSTIP%$'\n'}
+HOSTIP=${HOSTIP//[[:blank:]]/}
 
-# Join swarm
-docker swarm join --token "${TOKEN}" 10.0.0.4:2377
+# Init swarm
+docker swarm init --advertise-addr ${HOSTIP}
+
+# Setup token server
+mkdir -p /var/lib/swarm-tokens
+docker swarm join-token -q worker > /var/lib/swarm-tokens/worker
+docker swarm join-token -q manager > /var/lib/swarm-tokens/manager
+docker run --name token-server -v /var/lib/swarm-tokens:/usr/share/nginx/html:ro -d -p 8080:80 nginx

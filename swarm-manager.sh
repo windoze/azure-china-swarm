@@ -27,24 +27,8 @@ EOF
 systemctl daemon-reload
 systemctl restart docker
 
-# Get Host IP
-HOSTIP=`hostname --ip-address`
-HOSTIP=${HOSTIP%$'\n'}
-HOSTIP=${HOSTIP//[[:blank:]]/}
+# Get manager token
+TOKEN="`curl -s 10.0.0.4:8080/manager`"
 
-# Start etcd
-docker run -d -v /etc/ssl/certs:/etc/ssl/certs -p 4001:4001 -p 2380:2380 -p 2379:2379 \
- --name etcd ystyle/etcd \
- -name etcd0 \
- -advertise-client-urls http://${HOSTIP}:2379,http://${HOSTIP}:4001 \
- -listen-client-urls http://0.0.0.0:2379,http://0.0.0.0:4001 \
- -initial-advertise-peer-urls http://${HOSTIP}:2380 \
- -listen-peer-urls http://0.0.0.0:2380 \
- -initial-cluster-token etcd-cluster-1 \
- -initial-cluster etcd0=http://${HOSTIP}:2380 \
- -initial-cluster-state new
-
-sleep 10
-
-# Start swarm manager
-docker run -d -p 3376:3376 -t swarm manage -H 0.0.0.0:3376 etcd://${HOSTIP}:2379/swarm
+# Join swarm
+docker swarm join --token "${TOKEN}" 10.0.0.4:2377

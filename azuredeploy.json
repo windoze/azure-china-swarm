@@ -17,7 +17,7 @@
     }
   },
   "variables": {
-    "masterCount": 1,
+    "masterCount": 3,
     "adminUsername": "azureuser",
     "vmNameMaster": "swarm-master-",
     "vmNameNode": "swarm-node-",
@@ -344,12 +344,8 @@
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[concat(variables('vmNameMaster'), copyIndex())]",
+      "name": "[concat(variables('vmNameMaster'), '0')]",
       "location": "[resourceGroup().location]",
-      "copy": {
-        "name": "vmLoopMaster",
-        "count": "[variables('masterCount')]"
-      },
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('vmNameMaster'), copyIndex(), '-nic')]",
@@ -363,7 +359,7 @@
           "vmSize": "[variables('vmSizeMaster')]"
         },
         "osProfile": {
-          "computerName": "[concat(variables('vmNameMaster'), copyIndex())]",
+          "computerName": "[concat(variables('vmNameMaster'), '0')]",
           "adminUsername": "[variables('adminUsername')]",
           "linuxConfiguration": {
             "disablePasswordAuthentication": "true",
@@ -385,7 +381,90 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "[concat(variables('vmNameMaster'), copyIndex(),'-osdisk')]",
+            "name": "[concat(variables('vmNameMaster'), '0','-osdisk')]",
+            "vhd": {
+              "uri": "[concat('http://', variables('newStorageAccountName'), '.blob.core.chinacloudapi.cn/', variables('vhdBlobContainer'), '/master-', '0', '-osdisk.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('vmNameMaster'), '0', '-nic'))]"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "apiVersion": "2015-06-15",
+          "type": "Microsoft.Compute/virtualMachines/extensions",
+          "name": "[concat(variables('vmNameMaster'), '0', '/config-swarm-master')]",
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/', variables('vmNameMaster'), '0')]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.OSTCExtensions",
+            "type": "CustomScriptForLinux",
+            "typeHandlerVersion": "1.4",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "fileUris": ["https://raw.githubusercontent.com/windoze/azure-china-swarm/master/swarm-manager-0.sh"],
+              "commandToExecute": "sh swarm-manager-0.sh"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(variables('vmNameMaster'), copyIndex(1))]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "vmLoopMaster",
+        "count": "[sub(variables('masterCount'),1)]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('vmNameMaster'), copyIndex(1), '-nic')]",
+        "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetMasters'))]",
+        "[concat('Microsoft.Compute/virtualMachines/', concat(variables('vmNameMaster'), '0')]"
+      ],
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('availabilitySetMasters'))]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[variables('vmSizeMaster')]"
+        },
+        "osProfile": {
+          "computerName": "[concat(variables('vmNameMaster'), copyIndex(1))]",
+          "adminUsername": "[variables('adminUsername')]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": "true",
+            "ssh": {
+              "publicKeys": [
+                {
+                  "path": "[variables('sshKeyPath')]",
+                  "keyData": "[parameters('sshPublicKey')]"
+                }
+              ]
+            }
+          }
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('osImagePublisher')]",
+            "offer": "[variables('osImageOffer')]",
+            "sku": "[variables('osImageSKU')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(variables('vmNameMaster'), copyIndex(1),'-osdisk')]",
             "vhd": {
               "uri": "[concat('http://', variables('newStorageAccountName'), '.blob.core.chinacloudapi.cn/', variables('vhdBlobContainer'), '/master-', copyIndex(), '-osdisk.vhd')]"
             },
@@ -396,7 +475,7 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('vmNameMaster'), copyIndex(), '-nic'))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('vmNameMaster'), copyIndex(1), '-nic'))]"
             }
           ]
         }
@@ -405,10 +484,10 @@
         {
           "apiVersion": "2015-06-15",
           "type": "Microsoft.Compute/virtualMachines/extensions",
-          "name": "[concat(variables('vmNameMaster'), copyIndex(), '/config-swarm-master')]",
+          "name": "[concat(variables('vmNameMaster'), , copyIndex(1), '/config-swarm-master')]",
           "location": "[resourceGroup().location]",
           "dependsOn": [
-            "[concat('Microsoft.Compute/virtualMachines/', variables('vmNameMaster'), copyIndex())]"
+            "[concat('Microsoft.Compute/virtualMachines/', variables('vmNameMaster'), copyIndex(1))]"
           ],
           "properties": {
             "publisher": "Microsoft.OSTCExtensions",
@@ -487,10 +566,10 @@
         {
           "apiVersion": "2015-06-15",
           "type": "Microsoft.Compute/virtualMachines/extensions",
-          "name": "[concat(variables('vmNameNode'), copyIndex(), '/config-swarm-node')]",
+          "name": "[concat(variables('vmNameMaster'), , copyIndex(), '/config-swarm-master')]",
           "location": "[resourceGroup().location]",
           "dependsOn": [
-            "[concat('Microsoft.Compute/virtualMachines/', variables('vmNameNode'), copyIndex())]"
+            "[concat('Microsoft.Compute/virtualMachines/', variables('vmNameMaster'), copyIndex())]"
           ],
           "properties": {
             "publisher": "Microsoft.OSTCExtensions",
