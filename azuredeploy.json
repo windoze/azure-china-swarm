@@ -348,7 +348,7 @@
       "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('vmNameMaster'), copyIndex(), '-nic')]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('vmNameMaster'), '0', '-nic')]",
         "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetMasters'))]"
       ],
       "properties": {
@@ -432,7 +432,7 @@
         "[concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('vmNameMaster'), copyIndex(1), '-nic')]",
         "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetMasters'))]",
-        "[concat('Microsoft.Compute/virtualMachines/', concat(variables('vmNameMaster'), '0')]"
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions', concat(variables('vmNameMaster'), '0'), 'config-swarm-master')]"
       ],
       "properties": {
         "availabilitySet": {
@@ -466,7 +466,7 @@
           "osDisk": {
             "name": "[concat(variables('vmNameMaster'), copyIndex(1),'-osdisk')]",
             "vhd": {
-              "uri": "[concat('http://', variables('newStorageAccountName'), '.blob.core.chinacloudapi.cn/', variables('vhdBlobContainer'), '/master-', copyIndex(), '-osdisk.vhd')]"
+              "uri": "[concat('http://', variables('newStorageAccountName'), '.blob.core.chinacloudapi.cn/', variables('vhdBlobContainer'), '/master-', copyIndex(1), '-osdisk.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -484,7 +484,7 @@
         {
           "apiVersion": "2015-06-15",
           "type": "Microsoft.Compute/virtualMachines/extensions",
-          "name": "[concat(variables('vmNameMaster'), , copyIndex(1), '/config-swarm-master')]",
+          "name": "[concat(variables('vmNameMaster'), copyIndex(1), '/config-swarm-master')]",
           "location": "[resourceGroup().location]",
           "dependsOn": [
             "[concat('Microsoft.Compute/virtualMachines/', variables('vmNameMaster'), copyIndex(1))]"
@@ -566,10 +566,10 @@
         {
           "apiVersion": "2015-06-15",
           "type": "Microsoft.Compute/virtualMachines/extensions",
-          "name": "[concat(variables('vmNameMaster'), , copyIndex(), '/config-swarm-master')]",
+          "name": "[concat(variables('vmNameNode'), copyIndex(), '/config-swarm-node')]",
           "location": "[resourceGroup().location]",
           "dependsOn": [
-            "[concat('Microsoft.Compute/virtualMachines/', variables('vmNameMaster'), copyIndex())]"
+            "[concat('Microsoft.Compute/virtualMachines/', variables('vmNameNode'), copyIndex())]"
           ],
           "properties": {
             "publisher": "Microsoft.OSTCExtensions",
