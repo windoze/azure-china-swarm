@@ -67,7 +67,7 @@
     "nodesLbName": "swarm-lb-nodes",
     "nodesLbID": "[resourceId('Microsoft.Network/loadBalancers',variables('nodesLbName'))]",
     "nodesLbBackendPoolName": "swarm-nodes-pool",
-    "sshKeyPath": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+    "sshKeyPath": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]"
   },
   "resources": [
     {
@@ -519,7 +519,7 @@
         "count": "[parameters('nodeCount')]"
       },
       "dependsOn": [
-        "vmLoopMaster",
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions', concat(variables('vmNameMaster'), '0'), 'config-swarm-master')]"
         "[concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('vmNameNode'), copyIndex(), '-nic')]"
       ],
