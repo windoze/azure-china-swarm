@@ -519,7 +519,7 @@
         "count": "[parameters('nodeCount')]"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines/extensions', concat(variables('vmNameMaster'), '0'), 'config-swarm-master')]"
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions', concat(variables('vmNameMaster'), '0'), 'config-swarm-master')]",
         "[concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('vmNameNode'), copyIndex(), '-nic')]"
       ],
