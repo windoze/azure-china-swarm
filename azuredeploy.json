@@ -2,10 +2,24 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "adminUsername": {
+      "type": "string",
+      "defaultValue": "azureuser",
+      "metadata": {
+        "description": "Administrator user name."
+      }
+    },
     "sshPublicKey": {
       "type": "securestring",
       "metadata": {
         "description": "SSH public key for the Virtual Machines."
+      }
+    },
+    "masterCount": {
+      "type": "int",
+      "defaultValue": 3,
+      "metadata": {
+        "description": "Number of Swarm manager nodes in the cluster."
       }
     },
     "nodeCount": {
@@ -17,8 +31,6 @@
     }
   },
   "variables": {
-    "masterCount": 3,
-    "adminUsername": "azureuser",
     "vmNameMaster": "swarm-master-",
     "vmNameNode": "swarm-node-",
     "vmSizeMaster": "Standard_A2",
@@ -55,12 +67,7 @@
     "nodesLbName": "swarm-lb-nodes",
     "nodesLbID": "[resourceId('Microsoft.Network/loadBalancers',variables('nodesLbName'))]",
     "nodesLbBackendPoolName": "swarm-nodes-pool",
-    "sshKeyPath": "[concat('/home/', variables('adminUsername'), '/.ssh/authorized_keys')]",
-    "consulServerArgs": [
-      "-advertise 10.0.0.4 -bootstrap-expect 3 -retry-join 10.0.0.5 -retry-join 10.0.0.6",
-      "-advertise 10.0.0.5 -retry-join 10.0.0.4 -retry-join 10.0.0.6",
-      "-advertise 10.0.0.6 -retry-join 10.0.0.4 -retry-join 10.0.0.5"
-    ]
+    "sshKeyPath": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
   },
   "resources": [
     {
@@ -203,7 +210,7 @@
       "location": "[resourceGroup().location]",
       "copy": {
         "name": "nicLoopMaster",
-        "count": "[variables('masterCount')]"
+        "count": "[parameters('masterCount')]"
       },
       "dependsOn": [
         "[concat('Microsoft.Network/loadBalancers/', variables('mastersLbName'))]",
@@ -268,7 +275,7 @@
       "location": "[resourceGroup().location]",
       "copy": {
         "name": "lbNatLoopMaster",
-        "count": "[variables('masterCount')]"
+        "count": "[parameters('masterCount')]"
       },
       "dependsOn": [
         "[concat('Microsoft.Network/loadBalancers/', variables('mastersLbName'))]"
@@ -360,7 +367,7 @@
         },
         "osProfile": {
           "computerName": "[concat(variables('vmNameMaster'), '0')]",
-          "adminUsername": "[variables('adminUsername')]",
+          "adminUsername": "[parameters('adminUsername')]",
           "linuxConfiguration": {
             "disablePasswordAuthentication": "true",
             "ssh": {
@@ -413,7 +420,7 @@
             "autoUpgradeMinorVersion": true,
             "settings": {
               "fileUris": ["https://raw.githubusercontent.com/windoze/azure-china-swarm/docker112/swarm-manager-0.sh"],
-              "commandToExecute": "sh swarm-manager-0.sh"
+              "commandToExecute": "[concat('sh swarm-manager-0.sh ', parameters('adminUsername'))]"
             }
           }
         }
@@ -426,7 +433,7 @@
       "location": "[resourceGroup().location]",
       "copy": {
         "name": "vmLoopMaster",
-        "count": "[sub(variables('masterCount'),1)]"
+        "count": "[sub(parameters('masterCount'),1)]"
       },
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName'))]",
@@ -443,7 +450,7 @@
         },
         "osProfile": {
           "computerName": "[concat(variables('vmNameMaster'), copyIndex(1))]",
-          "adminUsername": "[variables('adminUsername')]",
+          "adminUsername": "[parameters('adminUsername')]",
           "linuxConfiguration": {
             "disablePasswordAuthentication": "true",
             "ssh": {
@@ -496,7 +503,7 @@
             "autoUpgradeMinorVersion": true,
             "settings": {
               "fileUris": ["https://raw.githubusercontent.com/windoze/azure-china-swarm/docker112/swarm-manager.sh"],
-              "commandToExecute": "sh swarm-manager.sh"
+              "commandToExecute": "[concat('sh swarm-manager.sh ', parameters('adminUsername'))]"
             }
           }
         }
@@ -525,7 +532,7 @@
         },
         "osProfile": {
           "computerName": "[concat(variables('vmNameNode'), copyIndex())]",
-          "adminUsername": "[variables('adminUsername')]",
+          "adminUsername": "[parameters('adminUsername')]",
           "linuxConfiguration": {
             "disablePasswordAuthentication": "true",
             "ssh": {
@@ -578,7 +585,7 @@
             "autoUpgradeMinorVersion": true,
             "settings": {
               "fileUris": ["https://raw.githubusercontent.com/windoze/azure-china-swarm/docker112/swarm-node.sh"],
-              "commandToExecute": "sh swarm-node.sh"
+              "commandToExecute": "[concat('sh swarm-node.sh ', parameters('adminUsername'))]"
             }
           }
         }
@@ -588,7 +595,7 @@
   "outputs": {
     "sshTunnelCmd": {
       "type": "string",
-      "value": "[concat('ssh -L 2375:swarm-master-0:2375 -N ', variables('adminUsername'), '@', reference(variables('managementPublicIPAddrName')).dnsSettings.fqdn, ' -p 2200')]"
+      "value": "[concat('ssh -L 2375:swarm-master-0:2375 -N ', parameters('adminUsername'), '@', reference(variables('managementPublicIPAddrName')).dnsSettings.fqdn, ' -p 2200')]"
     },
     "dockerCmd": {
       "type": "string",
@@ -600,15 +607,15 @@
     },
     "sshMaster0": {
       "type": "string",
-      "value": "[concat('ssh ', variables('adminUsername'), '@', reference(variables('managementPublicIPAddrName')).dnsSettings.fqdn, ' -A -p 2200')]"
+      "value": "[concat('ssh ', parameters('adminUsername'), '@', reference(variables('managementPublicIPAddrName')).dnsSettings.fqdn, ' -A -p 2200')]"
     },
     "sshMaster1": {
       "type": "string",
-      "value": "[concat('ssh ', variables('adminUsername'), '@', reference(variables('managementPublicIPAddrName')).dnsSettings.fqdn, ' -A -p 2201')]"
+      "value": "[concat('ssh ', parameters('adminUsername'), '@', reference(variables('managementPublicIPAddrName')).dnsSettings.fqdn, ' -A -p 2201')]"
     },
     "sshMaster2": {
       "type": "string",
-      "value": "[concat('ssh ', variables('adminUsername'), '@', reference(variables('managementPublicIPAddrName')).dnsSettings.fqdn, ' -A -p 2202')]"
+      "value": "[concat('ssh ', parameters('adminUsername'), '@', reference(variables('managementPublicIPAddrName')).dnsSettings.fqdn, ' -A -p 2202')]"
     }
   }
 }
