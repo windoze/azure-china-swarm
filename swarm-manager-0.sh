@@ -5,7 +5,7 @@ USERNAME=$1
 PROXY="cxp.eastasia.cloudapp.azure.com:80"
 
 # Install docker engine
-curl -x ${PROXY} -sSL https://get.docker.com/ | sh
+curl -sSL https://mirror.azure.cn/repo/install-docker-engine.sh | sh -
 
 # Uses my proxy
 mkdir -p /etc/systemd/system/docker.service.d
@@ -24,7 +24,6 @@ EOF
 usermod -aG docker "${USERNAME}"
 systemctl daemon-reload
 systemctl restart docker
-chkconfig docker on
 
 # Get Host IP
 HOSTIP=`hostname --ip-address`
