@@ -26,9 +26,10 @@ systemctl daemon-reload
 systemctl restart docker
 
 # Get Host IP
-HOSTIP=`hostname --ip-address`
-HOSTIP=${HOSTIP%$'\n'}
-HOSTIP=${HOSTIP//[[:blank:]]/}
+#HOSTIP=`hostname --ip-address`
+#HOSTIP=${HOSTIP%$'\n'}
+#HOSTIP=${HOSTIP//[[:blank:]]/}
+HOSTIP="10.0.0.4"
 
 # Init swarm
 docker swarm init --advertise-addr ${HOSTIP}
