@@ -419,7 +419,7 @@
             "typeHandlerVersion": "1.4",
             "autoUpgradeMinorVersion": true,
             "settings": {
-              "fileUris": ["https://raw.githubusercontent.com/windoze/azure-china-swarm/docker112/swarm-manager-0.sh"],
+              "fileUris": ["https://raw.githubusercontent.com/windoze/azure-china-swarm/ubuntu/swarm-manager-0.sh"],
               "commandToExecute": "[concat('sh swarm-manager-0.sh ', parameters('adminUsername'))]"
             }
           }
@@ -502,7 +502,7 @@
             "typeHandlerVersion": "1.4",
             "autoUpgradeMinorVersion": true,
             "settings": {
-              "fileUris": ["https://raw.githubusercontent.com/windoze/azure-china-swarm/docker112/swarm-manager.sh"],
+              "fileUris": ["https://raw.githubusercontent.com/windoze/azure-china-swarm/ubuntu/swarm-manager.sh"],
               "commandToExecute": "[concat('sh swarm-manager.sh ', parameters('adminUsername'))]"
             }
           }
@@ -584,7 +584,7 @@
             "typeHandlerVersion": "1.4",
             "autoUpgradeMinorVersion": true,
             "settings": {
-              "fileUris": ["https://raw.githubusercontent.com/windoze/azure-china-swarm/docker112/swarm-node.sh"],
+              "fileUris": ["https://raw.githubusercontent.com/windoze/azure-china-swarm/ubuntu/swarm-node.sh"],
               "commandToExecute": "[concat('sh swarm-node.sh ', parameters('adminUsername'))]"
             }
           }
