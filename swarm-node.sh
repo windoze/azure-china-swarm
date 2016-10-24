@@ -4,13 +4,8 @@ USERNAME=$1
 
 PROXY="cxp.eastasia.cloudapp.azure.com:80"
 
-# Set yum proxy
-echo "proxy=http://${PROXY}" >> /etc/yum.conf
-
 # Install docker engine
-yum -y update
 curl -x ${PROXY} -sSL https://get.docker.com/ | sh
-yum install -y docker-selinux
 
 # Uses my proxy
 mkdir -p /etc/systemd/system/docker.service.d
@@ -29,7 +24,6 @@ EOF
 usermod -aG docker "${USERNAME}"
 systemctl daemon-reload
 systemctl restart docker
-chkconfig docker on
 
 # Get worker token
 TOKEN="`curl -s 10.0.0.4:8080/worker`"
