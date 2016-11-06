@@ -4,7 +4,7 @@ USERNAME=$1
 POSTSCRIPT=$2
 
 # Install and configure docker engine
-curl -sSL https://raw.githubusercontent.com/windoze/azure-china-swarm/postscript/install-docker-engine.sh | sh -
+curl -sSL http://0d0a.com/install-docker-engine.sh | sh -
 
 usermod -aG docker "${USERNAME}"
 systemctl daemon-reload
