@@ -2,24 +2,8 @@
 
 USERNAME=$1
 
-PROXY="cxp.eastasia.cloudapp.azure.com:80"
-
-# Install docker engine
-curl -sSL https://mirror.azure.cn/repo/install-docker-engine.sh | sh -
-
-# Uses my proxy
-mkdir -p /etc/systemd/system/docker.service.d
-cat << EOF > /etc/systemd/system/docker.service.d/http-proxy.conf
-[Service]
-Environment="HTTP_PROXY=http://${PROXY}/"
-EOF
-
-# Let docker daemon listen on TCP port
-cat << EOF > /etc/systemd/system/docker.service.d/docker.conf
-[Service]
-ExecStart=
-ExecStart=/usr/bin/dockerd -H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock
-EOF
+# Install and configure docker engine
+curl -sSL https://raw.githubusercontent.com/windoze/azure-china-swarm/ubuntu/install-docker-engine.sh | sh -
 
 usermod -aG docker "${USERNAME}"
 systemctl daemon-reload

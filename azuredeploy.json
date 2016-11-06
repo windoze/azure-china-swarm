@@ -427,7 +427,7 @@
             "typeHandlerVersion": "1.4",
             "autoUpgradeMinorVersion": true,
             "settings": {
-              "fileUris": ["https://raw.githubusercontent.com/windoze/azure-china-swarm/ubuntu/swarm-manager-0.sh"],
+              "fileUris": ["https://raw.githubusercontent.com/windoze/azure-china-swarm/postscript/swarm-manager-0.sh"],
               "commandToExecute": "[concat('sh swarm-manager-0.sh ', parameters('adminUsername'))]"
             }
           }
@@ -446,8 +446,7 @@
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('vmNameMaster'), copyIndex(1), '-nic')]",
-        "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetMasters'))]",
-        "[resourceId('Microsoft.Compute/virtualMachines/extensions', concat(variables('vmNameMaster'), '0'), 'config-swarm-master')]"
+        "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetMasters'))]"
       ],
       "properties": {
         "availabilitySet": {
@@ -502,6 +501,7 @@
           "name": "[concat(variables('vmNameMaster'), copyIndex(1), '/config-swarm-master')]",
           "location": "[resourceGroup().location]",
           "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines/extensions', concat(variables('vmNameMaster'), '0'), 'config-swarm-master')]",
             "[concat('Microsoft.Compute/virtualMachines/', variables('vmNameMaster'), copyIndex(1))]"
           ],
           "properties": {
@@ -510,7 +510,7 @@
             "typeHandlerVersion": "1.4",
             "autoUpgradeMinorVersion": true,
             "settings": {
-              "fileUris": ["https://raw.githubusercontent.com/windoze/azure-china-swarm/ubuntu/swarm-manager.sh"],
+              "fileUris": ["https://raw.githubusercontent.com/windoze/azure-china-swarm/postscript/swarm-manager.sh"],
               "commandToExecute": "[concat('sh swarm-manager.sh ', parameters('adminUsername'))]"
             }
           }
@@ -524,10 +524,9 @@
       "location": "[resourceGroup().location]",
       "copy": {
         "name": "vmLoopNode",
-        "count": "[parameters('nodeCount')]"
+        "count": "[sub(parameters('nodeCount'),1)]"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines/extensions', concat(variables('vmNameMaster'), '0'), 'config-swarm-master')]",
         "[concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('vmNameNode'), copyIndex(), '-nic')]"
       ],
@@ -584,6 +583,7 @@
           "name": "[concat(variables('vmNameNode'), copyIndex(), '/config-swarm-node')]",
           "location": "[resourceGroup().location]",
           "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines/extensions', concat(variables('vmNameMaster'), '0'), 'config-swarm-master')]",
             "[concat('Microsoft.Compute/virtualMachines/', variables('vmNameNode'), copyIndex())]"
           ],
           "properties": {
@@ -592,7 +592,7 @@
             "typeHandlerVersion": "1.4",
             "autoUpgradeMinorVersion": true,
             "settings": {
-              "fileUris": ["https://raw.githubusercontent.com/windoze/azure-china-swarm/ubuntu/swarm-node.sh"],
+              "fileUris": ["https://raw.githubusercontent.com/windoze/azure-china-swarm/postscript/swarm-node.sh"],
               "commandToExecute": "[concat('sh swarm-node.sh ', parameters('adminUsername'))]"
             }
           }
@@ -605,7 +605,6 @@
       "name": "[variables('lastNodeName')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "vmLoopNode",
         "[concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('lastNodeName'), '-nic')]"
       ],
@@ -662,6 +661,8 @@
           "name": "[concat(variables('lastNodeName'), '/config-swarm-node')]",
           "location": "[resourceGroup().location]",
           "dependsOn": [
+            "vmLoopMaster",
+            "vmLoopNode",
             "[concat('Microsoft.Compute/virtualMachines/', variables('lastNodeName'))]"
           ],
           "properties": {
@@ -670,8 +671,8 @@
             "typeHandlerVersion": "1.4",
             "autoUpgradeMinorVersion": true,
             "settings": {
-              "fileUris": ["https://raw.githubusercontent.com/windoze/azure-china-swarm/ubuntu/swarm-node-last.sh"],
-              "commandToExecute": "[concat('sh swarm-node.sh ', parameters('adminUsername'), parameters('postscript'))]"
+              "fileUris": ["https://raw.githubusercontent.com/windoze/azure-china-swarm/postscript/swarm-node-last.sh"],
+              "commandToExecute": "[concat('sh swarm-node-last.sh ', parameters('adminUsername'), parameters('postscript'))]"
             }
           }
         }
