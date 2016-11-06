@@ -28,6 +28,12 @@
       "metadata": {
         "description": "Number of Swarm worker nodes in the cluster."
       }
+    },
+    "postscript": {
+      "type": "string",
+      "metadata": {
+        "description": "The URL to the script to run after the cluster deployed."
+      }
     }
   },
   "variables": {
@@ -67,7 +73,9 @@
     "nodesLbName": "swarm-lb-nodes",
     "nodesLbID": "[resourceId('Microsoft.Network/loadBalancers',variables('nodesLbName'))]",
     "nodesLbBackendPoolName": "swarm-nodes-pool",
-    "sshKeyPath": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]"
+    "sshKeyPath": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+    "lastNodeIndex": "[sub(parameters('nodeCount'), 1)]",
+    "lastNodeName": "[concat(variables('vmNameNode'), variables('lastNodeIndex'))]"
   },
   "resources": [
     {
@@ -586,6 +594,84 @@
             "settings": {
               "fileUris": ["https://raw.githubusercontent.com/windoze/azure-china-swarm/ubuntu/swarm-node.sh"],
               "commandToExecute": "[concat('sh swarm-node.sh ', parameters('adminUsername'))]"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('lastNodeName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "vmLoopNode",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('lastNodeName'), '-nic')]"
+      ],
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('availabilitySetNodes'))]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[variables('vmSizeNode')]"
+        },
+        "osProfile": {
+          "computerName": "[concat(variables('vmNameNode'), sub(parameters('nodeCount'), 1))]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": "true",
+            "ssh": {
+              "publicKeys": [
+                {
+                  "path": "[variables('sshKeyPath')]",
+                  "keyData": "[parameters('sshPublicKey')]"
+                }
+              ]
+            }
+          }
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('osImagePublisher')]",
+            "offer": "[variables('osImageOffer')]",
+            "sku": "[variables('osImageSKU')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(variables('lastNodeName'),'-osdisk')]",
+            "vhd": {
+              "uri": "[concat('http://', variables('newStorageAccountName'), '.blob.core.chinacloudapi.cn/', variables('vhdBlobContainer'), '/node-', variables('lastNodeIndex'), '-osdisk.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('lastNodeName'), '-nic'))]"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "apiVersion": "2015-06-15",
+          "type": "Microsoft.Compute/virtualMachines/extensions",
+          "name": "[concat(variables('lastNodeName'), '/config-swarm-node')]",
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/', variables('lastNodeName'))]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.OSTCExtensions",
+            "type": "CustomScriptForLinux",
+            "typeHandlerVersion": "1.4",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "fileUris": ["https://raw.githubusercontent.com/windoze/azure-china-swarm/ubuntu/swarm-node-last.sh"],
+              "commandToExecute": "[concat('sh swarm-node.sh ', parameters('adminUsername'), parameters('postscript'))]"
             }
           }
         }
