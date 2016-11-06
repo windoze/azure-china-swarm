@@ -37,6 +37,7 @@
     }
   },
   "variables": {
+    "urlBase": "http://0d0a.com",
     "vmNameMaster": "swarm-master-",
     "vmNameNode": "swarm-node-",
     "vmSizeMaster": "Standard_A2",
@@ -427,7 +428,7 @@
             "typeHandlerVersion": "1.4",
             "autoUpgradeMinorVersion": true,
             "settings": {
-              "fileUris": ["https://raw.githubusercontent.com/windoze/azure-china-swarm/postscript/swarm-manager-0.sh"],
+              "fileUris": ["http://0d0a.com/swarm-manager-0.sh"],
               "commandToExecute": "[concat('sh swarm-manager-0.sh ', parameters('adminUsername'))]"
             }
           }
@@ -510,7 +511,7 @@
             "typeHandlerVersion": "1.4",
             "autoUpgradeMinorVersion": true,
             "settings": {
-              "fileUris": ["https://raw.githubusercontent.com/windoze/azure-china-swarm/postscript/swarm-manager.sh"],
+              "fileUris": ["http://0d0a.com/swarm-manager.sh"],
               "commandToExecute": "[concat('sh swarm-manager.sh ', parameters('adminUsername'))]"
             }
           }
@@ -592,7 +593,7 @@
             "typeHandlerVersion": "1.4",
             "autoUpgradeMinorVersion": true,
             "settings": {
-              "fileUris": ["https://raw.githubusercontent.com/windoze/azure-china-swarm/postscript/swarm-node.sh"],
+              "fileUris": ["http://0d0a.com/swarm-node.sh"],
               "commandToExecute": "[concat('sh swarm-node.sh ', parameters('adminUsername'))]"
             }
           }
@@ -671,7 +672,7 @@
             "typeHandlerVersion": "1.4",
             "autoUpgradeMinorVersion": true,
             "settings": {
-              "fileUris": ["https://raw.githubusercontent.com/windoze/azure-china-swarm/postscript/swarm-node-last.sh"],
+              "fileUris": ["http://0d0a.com/swarm-node-last.sh"],
               "commandToExecute": "[concat('sh swarm-node-last.sh ', parameters('adminUsername'), parameters('postscript'))]"
             }
           }

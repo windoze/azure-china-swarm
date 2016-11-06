@@ -1,6 +1,7 @@
 #!/bin/sh
 
 USERNAME=$1
+PROXY="cxp.eastasia.cloudapp.azure.com:80"
 
 # Install and configure docker engine
 curl -sSL http://0d0a.com/install-docker-engine.sh | sh -
@@ -10,7 +11,7 @@ systemctl daemon-reload
 systemctl restart docker
 
 # Install docker-compose
-curl -x "${PROXY}" -L "https://github.com/docker/compose/releases/download/1.8.1/docker-compose-$(uname -s)-$(uname -m)" > /usr/local/bin/docker-compose
+curl -L "http://0d0a.com/docker-compose-$(uname -s)-$(uname -m)" > /usr/local/bin/docker-compose
 chmod +x /usr/local/bin/docker-compose
 
 # Get Host IP
