@@ -4,7 +4,7 @@ USERNAME=$1
 POSTSCRIPT=$2
 
 # Install and configure docker engine
-curl -sSL http://0d0a.com/install-docker-engine.sh | sh -
+curl -sSL http://mmp-docker-showcase-hub.chinaeast.cloudapp.chinacloudapi.cn/install-docker-engine.sh | sh -
 
 usermod -aG docker "${USERNAME}"
 systemctl daemon-reload

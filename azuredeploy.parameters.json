@@ -11,11 +11,8 @@
     "masterCount": {
       "value": 3
     },
-    "nodeCount": {
-      "value": 3
-    },
-    "postscript": {
-      "value": "http://0d0a.com/x.sh"
+    "dbPassword": {
+      "value": "Abcd1234!"
     }
   }
 }
