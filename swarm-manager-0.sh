@@ -27,4 +27,4 @@ docker swarm init --advertise-addr ${HOSTIP}
 mkdir -p /var/lib/swarm-tokens
 docker swarm join-token -q worker > /var/lib/swarm-tokens/worker
 docker swarm join-token -q manager > /var/lib/swarm-tokens/manager
-docker run --name token-server -v /var/lib/swarm-tokens:/usr/share/nginx/html:ro -d -p 8080:80 nginx
+docker run --name token-server -v /var/lib/swarm-tokens:/usr/share/nginx/html:ro -d -p 8080:80 mirror.azure.cn:5000/nginx

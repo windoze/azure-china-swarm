@@ -27,6 +27,9 @@ TOKEN="`curl -s 10.0.0.4:8080/manager`"
 # Join swarm
 docker swarm join --token "${TOKEN}" 10.0.0.4:2377
 
+# Clean up, removing token server on manager-0
+docker -H 10.0.0.4 rm token-server
+
 # Run post script
 if [ "xx${POSTSCRIPT}" != "xx" ]; then
     curl -sSL "${POSTSCRIPT}" | bash -s -- "${COUNT}" "${DBHOST}" "${DBUSER}" "${DBPASS}" "${DBNAME}"
