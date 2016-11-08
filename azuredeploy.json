@@ -89,7 +89,7 @@
     "dbServerName": "[concat('wp', uniqueString(resourceGroup().id, deployment().name))]",
     "dbServerVersion": "5.5",
     "databaseName": "wordpress",
-    "dbUser": "[concat(parameters('dbUserName'),'%',variables('dbServerName'))]",
+    "dbUser": "[concat(variables('dbServerName'),'%',parameters('dbUserName'))]",
     "quotedDbUser": "[concat(variables('singleQuote'),variables('dbUser'),variables('singleQuote'))]",
     "quptedDbPassword": "[concat(variables('singleQuote'),parameters('dbPassword'),variables('singleQuote'))]"
   },
