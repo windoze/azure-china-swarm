@@ -50,6 +50,7 @@
     }
   },
   "variables": {
+    "singleQuote": "'",
     "vmNameMaster": "swarm-master-",
     "vmSizeMaster": "Standard_A2",
     "availabilitySetMasters": "swarm-masters-set",
@@ -78,7 +79,7 @@
     "mastersLbProbesID": "[concat(variables('mastersLbID'),'/probes/', variables('mastersLbProbesName'))]",
     "mastersLbRulesName": "swarm-lb-rules",
     "sshKeyPath": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
-    "dbServerName": "[concat('d', substring(uniqueString(resourceGroup().id, deployment().name), 0, 5))]",
+    "dbServerName": "[concat('wp', uniqueString(resourceGroup().id, deployment().name))]",
     "dbServerVersion": "5.5",
     "databaseName": "wordpress"
   },
@@ -121,17 +122,6 @@
                 }
             },
             {
-                "name": "[concat(parameters('dbUserName'), '@', variables('dbServerName'))]",
-                "type": "users",
-                "apiVersion": "2015-09-01",
-                "dependsOn": [
-                    "[concat('Microsoft.MySql/servers/', variables('dbServerName'))]"
-                ],
-                "properties": {
-                    "password": "[parameters('dbPassword')]"
-                }
-            },
-            {
                 "name": "[variables('databaseName')]",
                 "type": "databases",
                 "tags": {
@@ -149,18 +139,6 @@
                         "apiVersion": "2015-09-01",
                         "dependsOn": [
                             "[concat('Microsoft.MySql/servers/', variables('dbServerName'), '/users/', parameters('dbUserName'))]",
-                            "[concat('Microsoft.MySql/servers/', variables('dbServerName'), '/databases/', variables('databaseName'))]"
-                        ],
-                        "properties": {
-                            "level": "ReadWrite"
-                        }
-                    },
-                    {
-                        "name": "[concat(parameters('dbUserName'), '@', variables('dbServerName'))]",
-                        "type": "privileges",
-                        "apiVersion": "2015-09-01",
-                        "dependsOn": [
-                            "[concat('Microsoft.MySql/servers/', variables('dbServerName'), '/users/', parameters('dbUserName'), '@', variables('dbServerName'))]",
                             "[concat('Microsoft.MySql/servers/', variables('dbServerName'), '/databases/', variables('databaseName'))]"
                         ],
                         "properties": {
@@ -577,7 +555,7 @@
     },
     "installWordpress": {
       "type": "string",
-      "value": "[concat('ssh ', parameters('adminUsername'), '@', reference(variables('managementPublicIPAddrName')).dnsSettings.fqdn, ' -A -p 2200 ', 'docker service create --name wordpress -e WORDPRESS_DB_HOST=', variables('dbServerName'), '.mysqldb.chinacloudapi.cn', ' -e WORDPRESS_DB_USER=\"', parameters('dbUserName'), '@', variables('dbServerName'), '\" -e WORDPRESS_DB_PASSWORD=your_db_password -e WORDPRESS_DB_NAME=', variables('databaseName'), ' --replicas ', parameters('masterCount'), ' -p 8080:80 wordpress')]"
+      "value": "[concat('ssh ', parameters('adminUsername'), '@', reference(variables('managementPublicIPAddrName')).dnsSettings.fqdn, ' -A -p 2200 ', 'docker service create --name wordpress -e WORDPRESS_DB_HOST=', variables('dbServerName'), '.mysqldb.chinacloudapi.cn', ' -e WORDPRESS_DB_USER=', variables('singleQuote'), variables('dbServerName'), '%', parameters('dbUserName'), variables('singleQuote'), ' -e WORDPRESS_DB_PASSWORD=', variables('singleQuote'), parameters('dbPassword'), variables('singleQuote'), ' -e WORDPRESS_DB_NAME=', variables('databaseName'), ' --replicas ', parameters('masterCount'), ' -p 8080:80 wordpress')]"
     },
     "wordpressUrl": {
       "type": "string",
