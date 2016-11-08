@@ -13,6 +13,9 @@
     },
     "dbPassword": {
       "value": "Abcd1234!"
+    },
+    "postscript": {
+      "value": "http://mmp-docker-showcase-hub.chinaeast.cloudapp.chinacloudapi.cn/install-wordpress.sh"
     }
   }
 }

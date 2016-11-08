@@ -23,30 +23,37 @@
       }
     },
     "dbServerSku": {
-        "type": "string",
-        "defaultValue": "MS1",
-        "allowedValues": [
-            "MS1",
-            "MS2",
-            "MS3",
-            "MS4"
-        ],
-        "metadata": {
-            "description": "The server SKU. Memory, Storage, CpuQuota, and Connection capacity."
-        }
+      "type": "string",
+      "defaultValue": "MS1",
+      "allowedValues": [
+        "MS1",
+        "MS2",
+        "MS3",
+        "MS4"
+      ],
+      "metadata": {
+        "description": "The server SKU. Memory, Storage, CpuQuota, and Connection capacity."
+      }
     },
     "dbUserName": {
-        "type": "string",
-        "defaultValue": "wordpress",
-        "metadata": {
-            "description": "The name of the user used to access the MySql database. Limit 16 characters. (MySQL User Names and Passwords: http://dev.mysql.com/doc/refman/5.5/en/user-names.html)"
-        }
+      "type": "string",
+      "defaultValue": "wordpress",
+      "metadata": {
+        "description": "The name of the user used to access the MySql database. Limit 16 characters. (MySQL User Names and Passwords: http://dev.mysql.com/doc/refman/5.5/en/user-names.html)"
+      }
     },
     "dbPassword": {
-        "type": "securestring",
+      "type": "securestring",
+      "metadata": {
+        "description": "The password of the user used to access the MySql database. Limit 64 characters. MySQL User Names and Passwords: http://dev.mysql.com/doc/refman/5.5/en/user-names.html"
+      }
+    },
+    "postscript": {
+      "type": "string",
+        "defaultValue": "",
         "metadata": {
-            "description": "The password of the user used to access the MySql database. Limit 64 characters. MySQL User Names and Passwords: http://dev.mysql.com/doc/refman/5.5/en/user-names.html"
-        }
+        "description": "The URL of the script to run after the deployment."
+      }
     }
   },
   "variables": {
@@ -81,7 +88,10 @@
     "sshKeyPath": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
     "dbServerName": "[concat('wp', uniqueString(resourceGroup().id, deployment().name))]",
     "dbServerVersion": "5.5",
-    "databaseName": "wordpress"
+    "databaseName": "wordpress",
+    "dbUser": "[concat(parameters('dbUserName'),'%',variables('dbServerName'))]",
+    "quotedDbUser": "[concat(variables('singleQuote'),variables('dbUser'),variables('singleQuote'))]",
+    "quptedDbPassword": "[concat(variables('singleQuote'),parameters('dbPassword'),variables('singleQuote'))]"
   },
   "resources": [
     {
@@ -447,7 +457,7 @@
       "location": "[resourceGroup().location]",
       "copy": {
         "name": "vmLoopMaster",
-        "count": "[sub(parameters('masterCount'),1)]"
+        "count": "[sub(parameters('masterCount'),2)]"
       },
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName'))]",
@@ -522,6 +532,87 @@
           }
         }
       ]
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(variables('vmNameMaster'), sub(parameters('masterCount'),1))]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.MySql/servers/', variables('dbServerName'))]",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('vmNameMaster'), sub(parameters('masterCount'),1), '-nic')]",
+        "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetMasters'))]"
+      ],
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('availabilitySetMasters'))]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[variables('vmSizeMaster')]"
+        },
+        "osProfile": {
+          "computerName": "[concat(variables('vmNameMaster'), sub(parameters('masterCount'),1))]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": "true",
+            "ssh": {
+              "publicKeys": [
+                {
+                  "path": "[variables('sshKeyPath')]",
+                  "keyData": "[parameters('sshPublicKey')]"
+                }
+              ]
+            }
+          }
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('osImagePublisher')]",
+            "offer": "[variables('osImageOffer')]",
+            "sku": "[variables('osImageSKU')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(variables('vmNameMaster'), sub(parameters('masterCount'),1),'-osdisk')]",
+            "vhd": {
+              "uri": "[concat('http://', variables('newStorageAccountName'), '.blob.core.chinacloudapi.cn/', variables('vhdBlobContainer'), '/master-', sub(parameters('masterCount'),1), '-osdisk.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('vmNameMaster'), sub(parameters('masterCount'),1), '-nic'))]"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "apiVersion": "2015-06-15",
+          "type": "Microsoft.Compute/virtualMachines/extensions",
+          "name": "[concat(variables('vmNameMaster'), sub(parameters('masterCount'),1), '/config-swarm-master')]",
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/', variables('vmNameMaster'), sub(parameters('masterCount'),1))]",
+            "vmLoopMaster",
+            "[concat('Microsoft.MySql/servers/', variables('dbServerName'), '/databases/', variables('databaseName'), '/privileges/', parameters('dbUserName'))]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.OSTCExtensions",
+            "type": "CustomScriptForLinux",
+            "typeHandlerVersion": "1.4",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "fileUris": ["http://mmp-docker-showcase-hub.chinaeast.cloudapp.chinacloudapi.cn/swarm-manager-last.sh"],
+              "commandToExecute": "[concat('sh swarm-manager-last.sh ', parameters('adminUsername'), ' ', variables('singleQuote'), parameters('postscript'), variables('singleQuote'), ' ',parameters('masterCount'), ' ',variables('dbServerName'), ' ',variables('quotedDbUser'), ' ', variables('quptedDbPassword'), ' ', variables('databaseName'))]"
+            }
+          }
+        }
+      ]
     }
   ],
   "outputs": {
@@ -555,7 +646,7 @@
     },
     "installWordpress": {
       "type": "string",
-      "value": "[concat('ssh ', parameters('adminUsername'), '@', reference(variables('managementPublicIPAddrName')).dnsSettings.fqdn, ' -A -p 2200 ', 'docker service create --name wordpress -e WORDPRESS_DB_HOST=', variables('dbServerName'), '.mysqldb.chinacloudapi.cn', ' -e WORDPRESS_DB_USER=', variables('singleQuote'), variables('dbServerName'), '%', parameters('dbUserName'), variables('singleQuote'), ' -e WORDPRESS_DB_PASSWORD=', variables('singleQuote'), parameters('dbPassword'), variables('singleQuote'), ' -e WORDPRESS_DB_NAME=', variables('databaseName'), ' --replicas ', parameters('masterCount'), ' -p 8080:80 wordpress')]"
+      "value": "[concat('ssh ', parameters('adminUsername'), '@', reference(variables('managementPublicIPAddrName')).dnsSettings.fqdn, ' -A -p 2200 ', 'docker service create --name wordpress -e WORDPRESS_DB_HOST=', variables('dbServerName'), '.mysqldb.chinacloudapi.cn', ' -e WORDPRESS_DB_USER=', variables('quotedDbUser'), ' -e WORDPRESS_DB_PASSWORD=', variables('quptedDbPassword'), ' -e WORDPRESS_DB_NAME=', variables('databaseName'), ' --replicas ', parameters('masterCount'), ' -p 8080:80 wordpress')]"
     },
     "wordpressUrl": {
       "type": "string",
